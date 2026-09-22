@@ -1,13 +1,20 @@
 import json
 
-import bot.database_client
-import bot.telegram_client
+from bot.domain.messenger import Messenger
+from bot.domain.pizza import get_drinks, get_pizza_size, get_pizza_type
+from bot.domain.storage import Storage
 from bot.handlers.handler import Handler, HandlerStatus
-from bot.pizza import get_drinks, get_pizza_size, get_pizza_type
 
 
 class Approval(Handler):
-    def can_handle(self, update: dict, state: str, order_data: dict) -> bool:
+    def can_handle(
+        self,
+        update: dict,
+        state: str,
+        order_data: dict,
+        storage: Storage,
+        messenger: Messenger,
+    ) -> bool:
         if "callback_query" not in update:
             return False
 
@@ -21,16 +28,23 @@ class Approval(Handler):
 
         return callback_data in ["approval", "cancel"]
 
-    def handle(self, update: dict, state: str, order_data: dict) -> HandlerStatus:
+    def handle(
+        self,
+        update: dict,
+        state: str,
+        order_data: dict,
+        storage: Storage,
+        messenger: Messenger,
+    ) -> HandlerStatus:
         telegram_id = update["callback_query"]["from"]["id"]
         is_approval = update["callback_query"]["data"] == "approval"
-        user_data = bot.database_client.get_user(telegram_id)
+        user_data = storage.get_user(telegram_id)
         order_data = json.loads(user_data["order_json"])
 
-        bot.database_client.clear_user_state(telegram_id)
+        storage.clear_user_state(telegram_id)
 
-        bot.telegram_client.answer_callback_query(update["callback_query"]["id"])
-        bot.telegram_client.delete_message(
+        messenger.answer_callback_query(update["callback_query"]["id"])
+        messenger.delete_message(
             chat_id=update["callback_query"]["message"]["chat"]["id"],
             message_id=update["callback_query"]["message"]["message_id"],
         )
@@ -45,7 +59,7 @@ class Approval(Handler):
                 Ваше замовлення вже в дорозі!
             """
 
-        bot.telegram_client.send_message(
+        messenger.send_message(
             chat_id=update["callback_query"]["message"]["chat"]["id"],
             text=message_text,
             reply_markup=json.dumps(

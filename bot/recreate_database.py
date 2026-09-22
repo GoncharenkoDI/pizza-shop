@@ -1,3 +1,5 @@
-import bot.database_client
+from bot.domain.storage import Storage
+from bot.infrastructure.storage_sqlite import StorageSqlite
 
-bot.database_client.recreate_database()
+storage: Storage = StorageSqlite()
+storage.recreate_database()
