@@ -32,13 +32,11 @@ def test_message_start_execution():
     update_user_state_called = False
 
     def clear_user_state(telegram_id: int) -> None:
-        print("clear_user_state")
         nonlocal clear_user_state_called
         clear_user_state_called = True
         assert telegram_id == 766453001
 
     def update_user_state(telegram_id: int, state: str) -> None:
-        print("update_user_state")
         nonlocal update_user_state_called
         update_user_state_called = True
         assert telegram_id == 766453001
