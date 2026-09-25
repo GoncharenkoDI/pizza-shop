@@ -47,7 +47,7 @@ def test_update_database_logger_execution():
 
     dispatcher = Dispatcher(mock_storage, mock_messenger)
 
-    dispatcher.add_handler([UpdateDataBaseLogger()])
+    dispatcher.add_handlers(UpdateDataBaseLogger())
     dispatcher.dispatch(test_update)
 
     assert persist_update_called

@@ -64,7 +64,7 @@ def test_message_start_execution():
     mock_messenger = Mock({"send_message": send_message})
 
     dispatcher = Dispatcher(mock_storage, mock_messenger)
-    dispatcher.add_handler([MessageStart()])
+    dispatcher.add_handlers(MessageStart())
 
     dispatcher.dispatch(test_update)
 
