@@ -6,7 +6,7 @@ from bot.domain.storage import Storage
 from bot.handlers.handler import Handler, HandlerStatus
 
 
-class Approval(Handler):
+class CancelOrder(Handler):
     def can_handle(
         self,
         update: dict,
@@ -26,7 +26,7 @@ class Approval(Handler):
 
         callback_data = update["callback_query"]["data"]
 
-        return callback_data in ["approval", "cancel"]
+        return callback_data == "cancel"
 
     def handle(
         self,
@@ -37,7 +37,6 @@ class Approval(Handler):
         messenger: Messenger,
     ) -> HandlerStatus:
         telegram_id = update["callback_query"]["from"]["id"]
-        is_approval = update["callback_query"]["data"] == "approval"
         user_data = storage.get_user(telegram_id)
         order_data = json.loads(user_data["order_json"])
 
@@ -49,15 +48,13 @@ class Approval(Handler):
             message_id=update["callback_query"]["message"]["message_id"],
         )
 
-        message_text = ""
-        if is_approval:
-            message_text = f"""
-                Ви обрали:
-                піцу - {get_pizza_type(order_data["pizza_type"])},
-                розмір - {get_pizza_size(order_data["pizza_size"])},
-                напій - {get_drinks(order_data["drink"])}
-                Ваше замовлення вже в дорозі!
-            """
+        message_text = f"""
+            Ви обрали:
+            піцу - {get_pizza_type(order_data["pizza_type"])},
+            розмір - {get_pizza_size(order_data["pizza_size"])},
+            напій - {get_drinks(order_data["drink"])}
+            На жаль Ви відмовились від замовлення!
+        """
 
         messenger.send_message(
             chat_id=update["callback_query"]["message"]["chat"]["id"],

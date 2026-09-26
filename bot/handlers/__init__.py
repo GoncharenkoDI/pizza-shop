@@ -1,4 +1,5 @@
-from bot.handlers.approval import Approval
+from bot.handlers.approval_order import ApprovalOrder
+from bot.handlers.cancel_order import CancelOrder
 from bot.handlers.drink_selection import DrinkSelection
 from bot.handlers.ensure_user_exists import EnsureUserExists
 from bot.handlers.handler import Handler
@@ -16,5 +17,6 @@ def get_handlers() -> list[Handler]:
         PizzaSelectionHandler(),
         SizeSelection(),
         DrinkSelection(),
-        Approval(),
+        ApprovalOrder(),
+        CancelOrder(),
     ]
