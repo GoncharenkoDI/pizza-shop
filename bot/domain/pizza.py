@@ -23,6 +23,8 @@ DRINKS = {
     "no_drinks": "Без напою",
 }
 
+# order_data - {"pizza_type": PIZZA_TYPE_key, "pizza_size": PIZZA_SIZE_key, "drink": DRINKS_key}
+
 
 def build_keyboard(keyboard: dict) -> list:
     result = []
