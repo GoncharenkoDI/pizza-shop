@@ -57,7 +57,6 @@ def test_cancel_order_execution():
     answer_callback_query_called = False
     delete_message_called = False
 
-
     def clear_user_state(telegram_id: int) -> None:
         nonlocal clear_user_state_called
         clear_user_state_called = True
@@ -89,7 +88,7 @@ def test_cancel_order_execution():
 
     def delete_message(chat_id: int, message_id: int):
         assert chat_id == 766453001
-        assert message_id ==  284
+        assert message_id == 284
         nonlocal delete_message_called
         delete_message_called = True
         return True
@@ -117,7 +116,7 @@ def test_cancel_order_execution():
     assert delete_message_called
 
     assert len(send_message_calls) == 1
-   
+
     text = f"""
             Ви обрали:
             піцу - {get_pizza_type(order_data["pizza_type"])},
@@ -125,5 +124,5 @@ def test_cancel_order_execution():
             напій - {get_drinks(order_data["drink"])}
             На жаль Ви відмовились від замовлення!
         """
-    
+
     assert send_message_calls[0]["text"] == text
