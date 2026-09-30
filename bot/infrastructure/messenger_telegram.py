@@ -32,13 +32,13 @@ class MessengerTelegram(Messenger):
             assert response_json["ok"] == True
             return response_json["result"]
 
-    def get_updates(self, **kwargs) -> list[dict]:
+    def get_updates(self, timeout: int, **kwargs) -> list[dict]:
         """
         Reference of the method:  https://core.telegram.org/bots/api#getupdates
         Returned:   List of Update object
         Reference of the update object:  https://core.telegram.org/bots/api#update
         """
-        return self._make_request("getUpdates", **kwargs)
+        return self._make_request("getUpdates", timeout=timeout, **kwargs)
 
     def send_message(self, chat_id: int, text: str, **kwargs) -> dict:
         """
