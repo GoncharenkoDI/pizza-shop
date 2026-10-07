@@ -34,13 +34,12 @@ class StoragePostgres(Storage):
         )
 
     def recreate_database(self) -> None:
-        # connection = sqlite3.connect(os.getenv("SQLITE_DATABASE_PATH"))
         # створення таблиць
         with self._get_connection() as conn:
             with conn.cursor() as cursor:
-                cursor.execute("DROP TABLE IF EXISTS telegram_events")
-                cursor.execute("DROP TABLE IF EXISTS users")
-                print("Таблиці видалені")
+                # cursor.execute("DROP TABLE IF EXISTS telegram_events")
+                # cursor.execute("DROP TABLE IF EXISTS users")
+                # print("Таблиці видалені")
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS telegram_events
                     (
