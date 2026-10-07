@@ -1,0 +1,36 @@
+1. Повністю оновити систему на VDS
+    apt update && apt upgrade -y && apt autoremove -y
+2. На локальному комп'ютері генеруємо новий ssh ключ
+    ssh-keygen -t rsa -b 4096 -C "Key for test pizza-shop"
+    на запит вказуємо D:/Documents/Dima/Ssh_key/key
+    де D:/Documents/Dima/Ssh_key - існуюча папка
+3. Створюємо нового користувача на VDS
+    adduser dima
+    пароль повинен бути надійним та його треба зберігти.
+4. Включаємо цього користувача в групу sudo
+    usermod -aG sudo dima
+5. Налаштовуємо авторизацію на VDS за допомогою ключа.
+    5.1. створюємо на VDS папку та змінюемо до неї доступ виключно для власника (dima)
+        mkdir -p /home/dima/.ssh
+        chmod 700 /home/dima/.ssh
+    5.2. копіюємо туди створений ключ командою ssh-copy-id
+    5.3. забороняємо ssh доступ для root (див. файл /etc/ssh/sshd.config)
+    5.4. забороняємо логін по паролю (див. файл /etc/ssh/sshd.config)
+    5.5. змінюємо порт ssh (див. файл /etc/ssh/sshd.config)
+6. налаштування firewall:
+    6.1. встановлюємо програму для firewall
+        apt install -y ufw
+    6.2. забороняємо всі вхідні
+        ufw default deny incoming
+    6.3. дозволяємо всі вихідні
+        ufw default allow outgoing
+    6.4. дозволяємо порт з 5.5. 
+        ufw allow <port 5.5>/tcp
+    6.5. забороняємо перебирати ssh на цьому порту
+        ufw limit <port 5.5>/tcp
+    6.5. включаємо firewall
+        ufw --force enable
+7. Перезапускаємо ssh
+    systemctl restart sshd
+8. перевіряємо чи все працює в іншому вікні терміналу не виходячи з цього
+
