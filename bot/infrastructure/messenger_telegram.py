@@ -1,5 +1,7 @@
 import json
+import logging
 import os
+import time
 import urllib.request
 
 from dotenv import load_dotenv
@@ -7,6 +9,14 @@ from dotenv import load_dotenv
 from bot.domain.messenger import Messenger
 
 load_dotenv()
+
+# Налаштування логування для обробки updates
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s.%(msecs)03d] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 
 class MessengerTelegram(Messenger):
@@ -17,6 +27,9 @@ class MessengerTelegram(Messenger):
         return f"https://api.telegram.org/file/bot{os.getenv('TELEGRAM_TOKEN')}"
 
     def _make_request(self, method: str, **kwargs):
+        start_time = time.time()
+        logger.info(f"[HTTP] - POST {method}")
+
         json_data = json.dumps(kwargs).encode("utf-8")
 
         request = urllib.request.Request(
@@ -25,12 +38,22 @@ class MessengerTelegram(Messenger):
             headers={"Content-Type": "application/json"},
             data=json_data,
         )
+        try:
+            with urllib.request.urlopen(request) as response:
+                response_body = response.read().decode("utf-8")
+                response_json = json.loads(response_body)
+                assert response_json["ok"] == True
 
-        with urllib.request.urlopen(request) as response:
-            response_body = response.read().decode("utf-8")
-            response_json = json.loads(response_body)
-            assert response_json["ok"] == True
-            return response_json["result"]
+                duration_ms = (time.time() - start_time) * 1000
+                logger.info(f"[HTTP]- POST {method} - finished {duration_ms:.2f}ms")
+
+                return response_json["result"]
+        except Exception as e:
+            duration_ms = (time.time() - start_time) * 1000
+            logger.error(
+                f"[HTTP] - POST {method} - failed {duration_ms:.2f}ms. Error - {e}"
+            )
+            raise
 
     def get_updates(self, timeout: int, **kwargs) -> list[dict]:
         """

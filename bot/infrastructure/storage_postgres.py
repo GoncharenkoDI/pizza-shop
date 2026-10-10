@@ -1,5 +1,7 @@
 import json
+import logging
 import os
+import time
 
 import pg8000
 from dotenv import load_dotenv
@@ -7,6 +9,14 @@ from dotenv import load_dotenv
 from bot.domain.storage import Storage
 
 load_dotenv()
+
+# Налаштування логування для обробки запитів до БД
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s.%(msecs)03d] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 
 class StoragePostgres(Storage):
@@ -61,26 +71,51 @@ class StoragePostgres(Storage):
             print(" Таблиці створені")
 
     def persist_updates(self, updates: list[dict]) -> None:
+        start_time = time.time()
+        method_name = "persist_updates"
+        sql = "INSERT INTO telegram_events (payload) VALUES (%s)"
+
         payloads = []
         for update in updates:
             payloads.append((json.dumps(update, ensure_ascii=False, indent=2),))
 
-        with self._get_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.executemany(
-                    "INSERT INTO telegram_events (payload) VALUES (%s)", payloads
-                )
-            conn.commit()
+        logger.info(f"[DB] - {method_name} {sql}- start")
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.executemany(sql, payloads)
+                conn.commit()
+
+            duration = (time.time() - start_time) * 1000
+            logger.info(f"[DB] - {method_name} - finished - {duration:.2f}ms")
+        except Exception as e:
+            duration = (time.time() - start_time) * 1000
+            logger.error(
+                f"[DB] - {method_name} - failed - {duration:.2f}ms. Error: {e}"
+            )
+            raise
 
     def persist_update(self, update: dict) -> None:
+        start_time = time.time()
+        method_name = "persist_update"
+        sql = "INSERT INTO telegram_events (payload) VALUES (%s)"
         payload: str = json.dumps(update, ensure_ascii=False, indent=2)
+        logger.info(f"[DB] - {method_name} {sql}- start")
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(sql, (payload,))
+                conn.commit()
 
-        with self._get_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "INSERT INTO telegram_events (payload) VALUES (%s)", (payload,)
-                )
-            conn.commit()
+            duration = (time.time() - start_time) * 1000
+            logger.info(f"[DB] - {method_name} - finished - {duration:.2f}ms\n")
+
+        except Exception as e:
+            duration = (time.time() - start_time) * 1000
+            logger.error(
+                f"[DB] - {method_name} - failed - {duration:.2f}ms. Error: {e}\n"
+            )
+            raise
 
     def ensure_user_exists(self, telegram_id: int) -> None:
         """
@@ -88,61 +123,132 @@ class StoragePostgres(Storage):
         If user doesn't exists, create them.
         All operation happen in single transaction.
         """
-        with self._get_connection() as conn:
-            with conn.cursor() as cursor:
-                # check if user exists.
-                cursor.execute(
-                    "SELECT 1 FROM users WHERE telegram_id = %s", (telegram_id,)
-                )
-                # If user doesn't exists, create them.
-                if cursor.fetchone() is None:
-                    cursor.execute(
-                        "INSERT INTO users (telegram_id) VALUES (%s)", (telegram_id,)
+        start_time = time.time()
+        method_name = "ensure_user_exists"
+        try:
+            logger.info(f"[DB] - {method_name} - start")
+            with self._get_connection() as conn:
+                with conn.cursor() as cursor:
+                    # check if user exists.
+                    sql = "SELECT 1 FROM users WHERE telegram_id = %s"
+                    logger.info(f"[DB] - {method_name} {sql} - start")
+                    cursor.execute(sql, (telegram_id,))
+                    result = cursor.fetchone()
+                    duration = (time.time() - start_time) * 1000
+                    logger.info(
+                        f"[DB] - {method_name} {sql} - finished - {duration:.2f}ms."
                     )
-            conn.commit()
+                    # If user doesn't exists, create them.
+                    if result is None:
+                        start_time2 = time.time()
+                        sql = "INSERT INTO users (telegram_id) VALUES (%s)"
+                        logger.info(f"[DB] - {method_name} {sql} - start")
+                        cursor.execute(sql, (telegram_id,))
+                        duration = (time.time() - start_time2) * 1000
+                        logger.info(
+                            f"[DB] - {method_name} {sql} - finished - {duration:.2f}ms."
+                        )
+                conn.commit()
+
+            duration = (time.time() - start_time) * 1000
+            logger.info(f"[DB] - {method_name} - finished - {duration:.2f}ms.")
+        except Exception as e:
+            duration = (time.time() - start_time) * 1000
+            logger.error(
+                f"[DB] - {method_name} - failed - {duration:.2f}ms. Error: {e}"
+            )
+            raise
 
     def clear_user_state(self, telegram_id: int) -> None:
         """Clear user state and order_json in table users"""
-        with self._get_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "UPDATE users SET state=NULL, order_json = NULL WHERE telegram_id = %s",
-                    (telegram_id,),
-                )
-            conn.commit()
+        sql = "UPDATE users SET state=NULL, order_json = NULL WHERE telegram_id = %s"
+        start_time = time.time()
+        method_name = "clear_user_state"
+        logger.info(f"[DB] - {method_name} {sql} - start")
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(
+                        sql,
+                        (telegram_id,),
+                    )
+                conn.commit()
+            duration = (time.time() - start_time) * 1000
+            logger.info(f"[DB] - {method_name} - finished - {duration:.2f}ms")
+        except Exception:
+            duration = (time.time() - start_time) * 1000
+            logger.error(f"[DB] - {method_name} - failed - {duration:.2f}ms")
+            raise
 
     def update_user_state(self, telegram_id: int, state: str) -> None:
         """Update user state in table users"""
-        with self._get_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "UPDATE users SET state=%s WHERE telegram_id = %s",
-                    (state, telegram_id),
-                )
-            conn.commit()
+        sql = "UPDATE users SET state=%s WHERE telegram_id = %s"
+        start_time = time.time()
+        method_name = "update_user_state"
+        logger.info(f"[DB] - {method_name} {sql} - start")
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(
+                        sql,
+                        (state, telegram_id),
+                    )
+                conn.commit()
+
+            duration = (time.time() - start_time) * 1000
+            logger.info(f"[DB] - {method_name} - finished - {duration:.2f}ms")
+
+        except Exception:
+            duration = (time.time() - start_time) * 1000
+            logger.error(f"[DB] - {method_name} - failed - {duration:.2f}ms")
+            raise
 
     def update_user_order_json(self, telegram_id: int, order_data: dict) -> None:
         """Update user state in table users"""
-        with self._get_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "UPDATE users SET order_json=%s WHERE telegram_id = %s",
-                    (
-                        json.dumps(order_data, ensure_ascii=False, indent=2),
-                        telegram_id,
-                    ),
-                )
-            conn.commit()
+        sql = "UPDATE users SET order_json=%s WHERE telegram_id = %s"
+        start_time = time.time()
+        method_name = "update_user_order_json"
+        logger.info(f"[DB] - {method_name} {sql} - start")
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(
+                        sql,
+                        (
+                            json.dumps(order_data, ensure_ascii=False, indent=2),
+                            telegram_id,
+                        ),
+                    )
+                conn.commit()
+
+            duration = (time.time() - start_time) * 1000
+            logger.info(f"[DB] - {method_name} - finished - {duration:.2f}ms")
+
+        except Exception:
+            duration = (time.time() - start_time) * 1000
+            logger.error(f"[DB] - {method_name} - failed - {duration:.2f}ms")
+            raise
 
     def get_user(self, telegram_id: int) -> dict:
-        with self._get_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "SELECT id, telegram_id, created_at, state, order_json FROM users WHERE telegram_id = %s",
-                    (telegram_id,),
-                )
-                result = cursor.fetchone()
-            conn.commit()
+        sql = "SELECT id, telegram_id, created_at, state, order_json FROM users WHERE telegram_id = %s"
+        method_name = "get_user"
+        start_time = time.time()
+        logger.info(f"[DB] - {method_name} - {sql} started.")
+        try:
+            with self._get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(
+                        sql,
+                        (telegram_id,),
+                    )
+                    result = cursor.fetchone()
+                conn.commit()
+            duration = (time.time() - start_time) * 1000
+            logger.info(f"[DB] - {method_name} finished - {duration:.2f}ms.")
+        except Exception:
+            duration = (time.time() - start_time) * 1000
+            logger.error(f"[DB] - {method_name} failed - {duration}ms.")
+            raise
         if result:
             return {
                 "id": result[0],
