@@ -8,9 +8,6 @@ all: venv check run_bot
 	python3 -m venv .venv
 	.venv/bin/pip install --upgrade pip
 
-# Ціль для зручного виклику створення оточення
-venv: .venv
-
 # Інсталяція залежностей через файл-маркер
 .venv/.requirements-installed: .venv requirements.txt
 	.venv/bin/pip install -r requirements.txt
@@ -85,6 +82,15 @@ postgres_stop:
 	docker stop $(POSTGRES_CONTAINER)
 	docker rm $(POSTGRES_CONTAINER)
 
+postgres_logs:
+	@docker logs $(POSTGRES_CONTAINER)
+
+postgres_status:
+	@docker ps -a --filter name=$(POSTGRES_CONTAINER) --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+postgres_psql:
+	@docker exec -it $(POSTGRES_CONTAINER) psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)
+
 build:
 	docker build \
 	-t "$(BOT_IMAGE)" \
@@ -112,3 +118,9 @@ run: docker_net
 stop:
 	docker stop $(BOT_CONTAINER)
 	docker rm $(BOT_CONTAINER)
+
+logs:
+	@docker logs $(BOT_CONTAINER)
+
+status:
+	@docker ps -a --filter name=$(BOT_CONTAINER) --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
