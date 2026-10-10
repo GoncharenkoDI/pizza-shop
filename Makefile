@@ -120,7 +120,7 @@ stop:
 	docker rm $(BOT_CONTAINER)
 
 logs:
-	@docker logs $(BOT_CONTAINER)
+	@docker logs -f $(BOT_CONTAINER)
 
 status:
 	@docker ps -a --filter name=$(BOT_CONTAINER) --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
