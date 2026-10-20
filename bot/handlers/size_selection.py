@@ -38,8 +38,6 @@ class SizeSelection(Handler):
     ) -> HandlerStatus:
         telegram_id = update["callback_query"]["from"]["id"]
         pizza_size = update["callback_query"]["data"]
-        user_data = storage.get_user(telegram_id)
-        order_data = json.loads(user_data["order_json"])
         order_data["pizza_size"] = pizza_size
 
         storage.update_user_state(telegram_id, "WAIT_FOR_DRINKS")

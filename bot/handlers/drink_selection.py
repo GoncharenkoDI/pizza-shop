@@ -43,8 +43,6 @@ class DrinkSelection(Handler):
     ) -> HandlerStatus:
         telegram_id = update["callback_query"]["from"]["id"]
         drink = update["callback_query"]["data"]
-        user_data = storage.get_user(telegram_id)
-        order_data = json.loads(user_data["order_json"])
         order_data["drink"] = drink
 
         storage.update_user_state(telegram_id, "WAIT_FOR_ORDER_APPROVAL")

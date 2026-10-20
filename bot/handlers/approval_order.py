@@ -37,15 +37,16 @@ class ApprovalOrder(Handler):
         messenger: Messenger,
     ) -> HandlerStatus:
         telegram_id = update["callback_query"]["from"]["id"]
-        user_data = storage.get_user(telegram_id)
-        order_data = json.loads(user_data["order_json"])
+        callback_query_id = update["callback_query"]["id"]
+        chat_id = update["callback_query"]["message"]["chat"]["id"]
+        message_id = update["callback_query"]["message"]["message_id"]
 
         storage.clear_user_state(telegram_id)
 
-        messenger.answer_callback_query(update["callback_query"]["id"])
+        messenger.answer_callback_query(callback_query_id)
         messenger.delete_message(
-            chat_id=update["callback_query"]["message"]["chat"]["id"],
-            message_id=update["callback_query"]["message"]["message_id"],
+            chat_id=chat_id,
+            message_id=message_id,
         )
 
         message_text = f"""
