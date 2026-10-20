@@ -87,7 +87,7 @@ class MessengerTelegram(Messenger):
         """
         return self._make_request("sendPhoto", chat_id=chat_id, photo=photo, **kwargs)
 
-    def answer_callback_query(self, callback_query_id: str) -> list[dict]:
+    def answer_callback_query(self, callback_query_id: str) -> bool:
         """
         Reference of the method:  https://core.telegram.org/bots/api#answercallbackquery
         Returned:   True
