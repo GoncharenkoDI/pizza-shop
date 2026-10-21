@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 from bot.domain.messenger import Messenger
 
-load_dotenv()
+load_dotenv(override=True)
 
 # Налаштування логування для обробки updates
 logger = logging.getLogger(__name__)
