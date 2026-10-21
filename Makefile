@@ -9,8 +9,8 @@ all: venv check run_bot
 	.venv/bin/pip install --upgrade pip
 
 # Інсталяція залежностей через файл-маркер
-.venv/.requirements-installed: .venv requirements.txt
-	.venv/bin/pip install -r requirements.txt
+.venv/.requirements-installed: .venv dev-requirements.txt
+	.venv/bin/pip install -r dev-requirements.txt
 	@touch .venv/.requirements-installed
 
 # Проксі-ціль для зручного виклику `make install`

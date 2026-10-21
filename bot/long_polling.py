@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from bot.dispatcher import Dispatcher
 from bot.domain.messenger import Messenger
 
-load_dotenv()
+load_dotenv(override=True)
 
 
 def start_long_polling(dispatcher: Dispatcher, messenger: Messenger):

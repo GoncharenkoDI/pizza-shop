@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 from bot.domain.storage import Storage
 
-load_dotenv()
+load_dotenv(override=True)
 
 # Налаштування логування для обробки запитів до БД
 logger = logging.getLogger(__name__)
